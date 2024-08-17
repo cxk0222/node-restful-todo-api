@@ -50,6 +50,16 @@ const parseRequestBody = (req) => {
 const server = http.createServer(async (req, res) => {
   const { method, url } = req
 
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', '*')
+  res.setHeader('Access-Control-Allow-Headers', '*')
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200)
+    res.end()
+    return
+  }
+
   if (method === 'GET' && url === '/todos') {
     const todos = await readData()
     res.writeHead(200, { 'Content-Type': 'application/json' })
