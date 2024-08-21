@@ -83,6 +83,20 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(404, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ message: 'Todo not found' }))
     }
+  } else if (method === 'PUT' && url.match(/\/todos\/\d+/)) {
+    const id = parseInt(url.split('/')[2])
+    const todos = await readData()
+    const upldatedTodo = await parseRequestBody(req)
+    const index = todos.findIndex(todo => todo.id === id)
+    if (index !== -1) {
+      todos[index] = { ...todos[index], ...upldatedTodo }
+      await writeData(todos)
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify(todos[index]))
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ message: 'Todo not found' }))
+    }
   } else {
     res.writeHead(404, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify({ message: 'Route not found' }))
