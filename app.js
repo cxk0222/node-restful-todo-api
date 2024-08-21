@@ -97,6 +97,18 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(404, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ message: 'Todo not found' }))
     }
+  } else if (method === 'DELETE' && url.match(/\/todos\/\d+/)) {
+    const id = parseInt(url.split('/')[2])
+    const todos = await readData()
+    const newTodos = todos.filter(todo => todo.id !== id)
+    if (newTodos.length !== todos.length) {
+      await writeData(newTodos)
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ message: 'Todo deleted' }))
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ message: 'Todo not found' }))
+    }
   } else {
     res.writeHead(404, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify({ message: 'Route not found' }))
