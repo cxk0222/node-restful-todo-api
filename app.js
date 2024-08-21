@@ -1,5 +1,5 @@
 const http = require('http')
-const { readData, writeData } = require('./storage.js')
+const { getAllTodos, getTodoById, createTodo, updateTodo, deleteTodo } = require('./controller.js')
 const { parseRequestBody } = require('./utils.js')
 
 const server = http.createServer(async (req, res) => {
@@ -16,21 +16,17 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (method === 'GET' && url === '/todos') {
-    const todos = await readData()
+    const todos = await getAllTodos()
     res.writeHead(200, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify(todos))
   } else if (method === 'POST' && url === '/todos') {
     const newTodo = await parseRequestBody(req)
-    const todos = await readData()
-    newTodo.id = Date.now()
-    todos.push(newTodo)
-    await writeData(todos)
+    const createdTodo = await createTodo(newTodo)
     res.writeHead(201, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify(newTodo))
+    res.end(JSON.stringify(createdTodo))
   } else if (method === 'GET' && url.match(/\/todos\/\d+/)) {
     const id = parseInt(url.split('/')[2])
-    const todos = await readData()
-    const todo = todos.find(todo => todo.id === id)
+    const todo = await getTodoById(id)
     if (todo) {
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify(todo))
@@ -40,24 +36,19 @@ const server = http.createServer(async (req, res) => {
     }
   } else if (method === 'PUT' && url.match(/\/todos\/\d+/)) {
     const id = parseInt(url.split('/')[2])
-    const todos = await readData()
     const upldatedTodo = await parseRequestBody(req)
-    const index = todos.findIndex(todo => todo.id === id)
-    if (index !== -1) {
-      todos[index] = { ...todos[index], ...upldatedTodo }
-      await writeData(todos)
+    const todo = await updateTodo(id, upldatedTodo)
+    if (todo) {
       res.writeHead(200, { 'Content-Type': 'application/json' })
-      res.end(JSON.stringify(todos[index]))
+      res.end(JSON.stringify(todo))
     } else {
       res.writeHead(404, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ message: 'Todo not found' }))
     }
   } else if (method === 'DELETE' && url.match(/\/todos\/\d+/)) {
     const id = parseInt(url.split('/')[2])
-    const todos = await readData()
-    const newTodos = todos.filter(todo => todo.id !== id)
-    if (newTodos.length !== todos.length) {
-      await writeData(newTodos)
+    const success = await deleteTodo(id)
+    if (success) {
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ message: 'Todo deleted' }))
     } else {
