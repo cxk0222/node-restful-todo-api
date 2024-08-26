@@ -1,28 +1,38 @@
 const fs = require('node:fs/promises')
 const path = require('path')
 
-// 文件路径
+const DATA_DIR_PATH = path.join(__dirname, 'data')
 const DATA_FILE_PATH = path.join(__dirname, 'data', 'todos.json')
 
-console.log('DATA_FILE_PATH', DATA_FILE_PATH)
-
-const readData = async () => {
-  let data
+const ensureDirExists = async (dirPath) => {
   try {
-    data = await fs.readFile(DATA_FILE_PATH, { encoding: 'utf8' })
-    data = JSON.parse(data)
+    await fs.access(dirPath);
   } catch (error) {
-    return error
-  } finally {
-    return data || []
+    if (error.code === 'ENOENT') {
+      await fs.mkdir(dirPath, { recursive: true })
+    } else {
+      throw error
+    }
   }
 }
+
+const readData = async () => {
+  try {
+    let data = await fs.readFile(DATA_FILE_PATH, { encoding: 'utf8' })
+    return JSON.parse(data)
+  } catch (error) {
+    console.error(error)
+    return []
+  }
+}
+
 const writeData = async (data) => {
   try {
     const toString = JSON.stringify(data, null, 2)
+    await ensureDirExists(DATA_DIR_PATH)
     await fs.writeFile(DATA_FILE_PATH, toString)
   } catch (error) {
-    return error
+    console.error(error)
   }
 }
 
